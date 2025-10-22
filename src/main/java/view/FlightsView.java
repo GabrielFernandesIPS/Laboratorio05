@@ -17,6 +17,7 @@ import javafx.util.StringConverter;
 import model.Airport;
 import model.Flight;
 
+import java.lang.reflect.AccessibleObject;
 import java.util.Collection;
 
 public class FlightsView extends BorderPane {
@@ -58,45 +59,163 @@ public class FlightsView extends BorderPane {
 
     private void createInitialModel() {
         // TODO: create flight model - Figure 1 of assignment
+        Vertex<Airport> sfo = graph.insertVertex(new Airport("SFO"));
+        Vertex<Airport> ord = graph.insertVertex(new Airport("ORD"));
+        Vertex<Airport> pvd = graph.insertVertex(new Airport("PVD"));
+        Vertex<Airport> mia = graph.insertVertex(new Airport("MIA"));
+        Vertex<Airport> lga = graph.insertVertex(new Airport("LGA"));
+        Vertex<Airport> dfw = graph.insertVertex(new Airport("DFW"));
+        Vertex<Airport> lax = graph.insertVertex(new Airport("LAX"));
+        Vertex<Airport> hnl = graph.insertVertex(new Airport("HNL"));
 
-        // Vertex<Airport> sfo = graph.insertVertex(new Airport("SFO"));
-        // ...
+        Edge<Flight, Airport> f1 = graph.insertEdge(hnl, lax, new Flight("UN3563", 2555));
+        Edge<Flight, Airport> f2 = graph.insertEdge(lax, hnl, new Flight("DT1597", 2555));
+
+        Edge<Flight, Airport> f3 = graph.insertEdge(lax, sfo, new Flight("UN9375", 337));
+        Edge<Flight, Airport> f4 = graph.insertEdge(sfo, lax, new Flight("AM4526", 337));
+
+        Edge<Flight, Airport> f5 = graph.insertEdge(lax, ord, new Flight("UN4836", 1743));
+        Edge<Flight, Airport> f6 = graph.insertEdge(ord, lax, new Flight("VA2001", 1743));
+
+        Edge<Flight, Airport> f7 = graph.insertEdge(sfo, ord, new Flight("UN1475", 1843));
+        Edge<Flight, Airport> f8 = graph.insertEdge(ord, sfo, new Flight("AL7854", 1843));
+
+        Edge<Flight, Airport> f9 = graph.insertEdge(lax, dfw, new Flight("SP1020", 1233));
+        Edge<Flight, Airport> f10 = graph.insertEdge(dfw, lax, new Flight("AM4582", 1233));
+
+        Edge<Flight, Airport> f11 = graph.insertEdge(ord, dfw, new Flight("UN4568", 802));
+
+        Edge<Flight, Airport> f12 = graph.insertEdge(dfw, lga, new Flight("SP4512", 1387));
+
+        Edge<Flight, Airport> f13 = graph.insertEdge(ord, pvd, new Flight("AM4520", 849));
+        Edge<Flight, Airport> f14 = graph.insertEdge(pvd, ord, new Flight("UN7812", 849));
+
+        Edge<Flight, Airport> f15 = graph.insertEdge(pvd, mia, new Flight("FT1000", 1205));
+
+        Edge<Flight, Airport> f16 = graph.insertEdge(mia, lga, new Flight("FT4021", 1099));
+        Edge<Flight, Airport> f17 = graph.insertEdge(lga, mia, new Flight("AM1026", 1099));
+
+        Edge<Flight, Airport> f18 = graph.insertEdge(dfw, mia, new Flight("AM5267", 1120));
+
+
+
     }
 
     private void addAirport(String airportCode) {
         // TODO: implement, check for errors and use showError(message) in case of error
         //  code must be valid, i.e., not empty
-
-        showError("Not implemented yet!");
+        if(airportCode.isBlank() || airportCode.isEmpty()){
+            showError("The airport code cannot be blank or empty!");
+            return;
+        }
+        graph.insertVertex(new Airport(airportCode));
     }
 
     private void addFlight(Vertex<Airport> vertexFrom, Vertex<Airport> vertexTo, String code, String distance) {
         // TODO: implement, check for errors and use showError(message) in case of error
         //  Cannot add flights with the same airport as inbound/outbound
+        if(vertexFrom == null || vertexTo == null){
+            showError("One of the airports is null.");
+            return;
+        }
 
-        showError("Not implemented yet!");
+        if(vertexFrom.equals(vertexTo)){
+            showError("The destination cannot be the same as the departure!");
+            return;
+        }
+
+        if(code.isBlank()){
+            showError("Code field is empty.");
+            return;
+        }
+
+        if(distance.isBlank()){
+            showError("Distance field is empty.");
+            return;
+        }
+
+        double d = Double.parseDouble(distance);
+        if(d == 0){
+            showError("The distance between two airports cannot be zero!");
+            return;
+        }
+
+        graph.insertEdge(vertexFrom, vertexTo, new Flight(code, d));
     }
 
     private void removeFlight(Edge<Flight, Airport> edge) {
         // TODO: implement, check for errors and use showError(message) in case of error
+        if(edge == null){
+            showError("Flight is null.");
+            return;
+        }
 
-        showError("Not implemented yet!");
+        for(Edge<Flight, Airport> e : graph.edges()){
+            if(e.equals(edge)){
+                graph.removeEdge(e);
+                return;
+            }
+        }
+        showError("Flight not found.");
     }
 
     private void removeAirport(Vertex<Airport> vertex) {
         // TODO: implement, check for errors and use showError(message) in case of error
+        if(vertex == null){
+            showError("Airport is null.");
+            return;
+        }
 
-        showError("Not implemented yet!");
+        for(Vertex<Airport> v : graph.vertices()){
+            if(v.equals(vertex)){
+                graph.removeVertex(v);
+                return;
+            }
+        }
+        showError("Airport not found.");
+    }
+
+
+    private Vertex<Airport> getBusiestAirport(){
+        int flightCount = -1;
+        Vertex<Airport> airport = null;
+
+        if(graph.vertices() == null){
+            return null;
+        }
+
+        for(Vertex<Airport> v : graph.vertices()){
+            if(graph.incidentEdges(v).size() > flightCount){
+                flightCount = graph.incidentEdges(v).size();
+                airport = v;
+            }
+        }
+
+        return airport;
     }
 
     private void updateStatistics() {
         // TODO: query model and update labels
         //  e.g., labelNumberAirports.setText( ?? );
 
-        //labelNumberAirports.setText( ??? );
-        //labelNumberFlights.setText( ??? );
-        //labelBusiestAirport.setText( ??? );
-        //labelBusiestAirportNumberFlights.setText( ??? );
+        String nAirports = String.valueOf(graph.vertices().size());
+        labelNumberAirports.setText(nAirports);
+
+        String nFlights = String.valueOf(graph.edges().size());
+        labelNumberFlights.setText(nFlights);
+
+        if(getBusiestAirport() != null){
+            Vertex<Airport> a = getBusiestAirport();
+            labelBusiestAirport.setText(a.element().toString());
+
+            String nAirportFlights = String.valueOf(graph.incidentEdges(a).size());
+            labelBusiestAirportNumberFlights.setText(nAirportFlights);
+        }else {
+            labelBusiestAirport.setText("null");
+            labelBusiestAirportNumberFlights.setText("null");
+        }
+
+
     }
 
     ///////////////////////////////////////////////////////////////////////////////////
